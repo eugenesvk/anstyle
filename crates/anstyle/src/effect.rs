@@ -37,6 +37,9 @@ impl Effects {
     ///  Characters legible but marked as if for deletion. Not supported in Terminal.app
     pub const STRIKETHROUGH: Self = Self(1 << 11);
 
+    /// Reset all [`Effects`] applied
+    pub const BLANK: Self = Self(1 << 12);
+
     /// No effects enabled
     ///
     /// # Examples
@@ -64,6 +67,8 @@ impl Effects {
     pub const fn is_plain(self) -> bool {
         self.0 == Self::PLAIN.0
     }
+    /// Check if all effects/colors are reset
+    #[inline] pub const fn is_blank(self) -> bool { self.0 == Self::BLANK.0}
 
     /// Returns `true` if all of the effects in `other` are contained within `self`.
     ///
@@ -265,7 +270,7 @@ pub(crate) struct Metadata {
     pub(crate) escape: &'static str,
 }
 
-pub(crate) const METADATA: [Metadata; 12] = [
+pub(crate) const METADATA: [Metadata; 13] = [
     Metadata {
         name: "BOLD",
         escape: escape!("1"),
@@ -314,6 +319,7 @@ pub(crate) const METADATA: [Metadata; 12] = [
         name: "STRIKETHROUGH",
         escape: escape!("9"),
     },
+    Metadata {name:"BLANK",escape:escape!("9","0m"),},
 ];
 
 #[derive(Copy, Clone, Default, Debug)]
