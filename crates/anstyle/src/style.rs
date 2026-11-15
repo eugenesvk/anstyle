@@ -108,8 +108,6 @@ impl Style {
     fn fmt_to(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use core::fmt::Display as _;
 
-        self.effects.render().fmt(f)?;
-
         if let Some(fg) = self.fg {
             fg.render_fg().fmt(f)?;
         }
@@ -121,6 +119,8 @@ impl Style {
         if let Some(underline) = self.underline {
             underline.render_underline().fmt(f)?;
         }
+
+        self.effects.render().fmt(f)?; // effects can reset everything, so should be added last
 
         Ok(())
     }
@@ -287,6 +287,9 @@ impl Style {
         self.effects = self.effects.insert(crate::Effects::STRIKETHROUGH);
         self
     }
+
+    /// Apply `blank` effect that resets colors/effecs
+    #[must_use] #[inline] pub const fn blank(mut self) -> Self { self.effects = self.effects.insert(crate::Effects::BLANK); self }
 }
 
 /// # Reflection
@@ -324,6 +327,8 @@ impl Style {
             && self.underline.is_none()
             && self.effects.is_plain()
     }
+    /// Check if all effects/colors are reset
+    #[inline] pub const fn is_blank(self) -> bool { self.effects.is_blank() }
 }
 
 /// # Examples
