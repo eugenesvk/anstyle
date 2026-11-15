@@ -157,6 +157,8 @@ impl Style {
             ""
         }
     }
+    /// Renders the relevant [`Reset`][crate::Reset] unconditionally
+    #[inline] pub fn render_reset_force(self) -> impl core::fmt::Display + Copy { RESET }
 
     /// Write the relevant [`Reset`][crate::Reset] code
     ///
