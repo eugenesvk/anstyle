@@ -14,7 +14,7 @@ use crate::reset::RESET;
 /// let value = 42;
 /// println!("{style}{value}{style:#}");
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct Style {
     fg: Option<crate::Color>,
     bg: Option<crate::Color>,

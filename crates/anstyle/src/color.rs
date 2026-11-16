@@ -1,6 +1,6 @@
 /// Any ANSI color code scheme
 #[allow(clippy::exhaustive_enums)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Color {
     /// Available 4-bit ANSI color palette codes
     ///
