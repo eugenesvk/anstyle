@@ -14,6 +14,10 @@ pub enum Color {
     Ansi256(Ansi256Color),
     /// 24-bit ANSI RGB color codes
     Rgb(RgbColor),
+    /// Okhsv format for 24-bit ANSI RGB color codes
+    Okhsv(OkhsvColor),
+    /// Okhsl format for 24-bit ANSI RGB color codes
+    Okhsl(OkhslColor),
 }
 
 impl Color {
@@ -38,6 +42,8 @@ impl Color {
             Self::Ansi(color) => color.as_fg_buffer(),
             Self::Ansi256(color) => color.as_fg_buffer(),
             Self::Rgb(color) => color.as_fg_buffer(),
+            Self::Okhsv(color) => color.as_fg_buffer(),
+            Self::Okhsl(color) => color.as_fg_buffer(),
         }
     }
 
@@ -48,6 +54,8 @@ impl Color {
             Self::Ansi(color) => color.as_fg_buffer(),
             Self::Ansi256(color) => color.as_fg_buffer(),
             Self::Rgb(color) => color.as_fg_buffer(),
+            Self::Okhsv(color) => color.as_fg_buffer(),
+            Self::Okhsl(color) => color.as_fg_buffer(),
         };
         buffer.write_to(write)
     }
@@ -59,6 +67,8 @@ impl Color {
             Self::Ansi(color) => color.as_bg_buffer(),
             Self::Ansi256(color) => color.as_bg_buffer(),
             Self::Rgb(color) => color.as_bg_buffer(),
+            Self::Okhsv(color) => color.as_bg_buffer(),
+            Self::Okhsl(color) => color.as_bg_buffer(),
         }
     }
 
@@ -69,6 +79,8 @@ impl Color {
             Self::Ansi(color) => color.as_bg_buffer(),
             Self::Ansi256(color) => color.as_bg_buffer(),
             Self::Rgb(color) => color.as_bg_buffer(),
+            Self::Okhsv(color) => color.as_bg_buffer(),
+            Self::Okhsl(color) => color.as_bg_buffer(),
         };
         buffer.write_to(write)
     }
@@ -79,6 +91,8 @@ impl Color {
             Self::Ansi(color) => color.as_underline_buffer(),
             Self::Ansi256(color) => color.as_underline_buffer(),
             Self::Rgb(color) => color.as_underline_buffer(),
+            Self::Okhsv(color) => color.as_underline_buffer(),
+            Self::Okhsl(color) => color.as_underline_buffer(),
         }
     }
 
@@ -89,6 +103,8 @@ impl Color {
             Self::Ansi(color) => color.as_underline_buffer(),
             Self::Ansi256(color) => color.as_underline_buffer(),
             Self::Rgb(color) => color.as_underline_buffer(),
+            Self::Okhsv(color) => color.as_underline_buffer(),
+            Self::Okhsl(color) => color.as_underline_buffer(),
         };
         buffer.write_to(write)
     }
@@ -114,6 +130,8 @@ impl From<RgbColor> for Color {
         Self::Rgb(inner)
     }
 }
+impl From<Okhsv> for Color { #[inline] fn from(inner: Okhsv) -> Self { Self::Okhsv(inner) }}
+impl From<Okhsl> for Color { #[inline] fn from(inner: Okhsl) -> Self { Self::Okhsl(inner) }}
 
 impl From<u8> for Color {
     #[inline]
@@ -563,6 +581,90 @@ impl From<(u8, u8, u8)> for RgbColor {
         let (r, g, b) = inner;
         Self(r, g, b)
     }
+}
+
+
+#[allow(unused)]
+trait OkhsX {
+    fn on                 ( self, background: impl Into<Color>) -> crate::Style;
+    fn on_default         ( self) -> crate::Style;
+    fn render_fg          ( self) -> impl core::fmt::Display + Copy;
+    fn render_bg          ( self) -> impl core::fmt::Display + Copy;
+    fn as_fg_buffer       (&self) -> DisplayBuffer;
+    fn as_bg_buffer       (&self) -> DisplayBuffer;
+    fn as_underline_buffer(&self) -> DisplayBuffer;
+}
+
+use palette::{IntoColor, Srgb, Okhsv, Okhsv as OkhsvColor, Okhsl, Okhsl as OkhslColor};
+impl OkhsX for Okhsv {
+    #[inline]
+    fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
+        .fg_color(Some(self      .into()))
+        .bg_color(Some(background.into()))   }
+
+    /// Create a [`Style`][crate::Style] with this as the foreground
+    #[inline]
+    fn on_default(self) -> crate::Style { crate::Style::new()
+        .fg_color(Some(Color::Okhsv(self)))   }
+
+    /// Render the ANSI code for a foreground color
+    #[inline] fn render_fg(self) -> impl core::fmt::Display + Copy { self.as_fg_buffer() }
+    /// Render the ANSI code for a background color
+    #[inline] fn render_bg(self) -> impl core::fmt::Display + Copy { self.as_bg_buffer() }
+
+    #[inline] fn as_fg_buffer       (&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[38;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
+    #[inline] fn as_bg_buffer       (&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[48;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
+    #[inline] fn as_underline_buffer(&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[58;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
+}
+impl OkhsX for Okhsl {
+    #[inline]
+    fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
+        .fg_color(Some(self      .into()))
+        .bg_color(Some(background.into()))   }
+
+    /// Create a [`Style`][crate::Style] with this as the foreground
+    #[inline]
+    fn on_default(self) -> crate::Style { crate::Style::new()
+        .fg_color(Some(Color::Okhsl(self)))   }
+
+    /// Render the ANSI code for a foreground color
+    #[inline] fn render_fg(self) -> impl core::fmt::Display + Copy { self.as_fg_buffer() }
+    /// Render the ANSI code for a background color
+    #[inline] fn render_bg(self) -> impl core::fmt::Display + Copy { self.as_bg_buffer() }
+
+    #[inline] fn as_fg_buffer       (&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[38;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
+    #[inline] fn as_bg_buffer       (&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[48;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
+    #[inline] fn as_underline_buffer(&self) -> DisplayBuffer {
+        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        DisplayBuffer::default().write_str("\x1B[58;2;")
+            .write_code(c.red  ).write_str(";")
+            .write_code(c.green).write_str(";")
+            .write_code(c.blue ).write_str("m")   }
 }
 
 const DISPLAY_BUFFER_CAPACITY: usize = 19;
