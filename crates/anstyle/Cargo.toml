@@ -29,6 +29,7 @@ default = ["std"]
 std = []
 
 [dependencies]
+palette = "0.7.6"
 
 [dev-dependencies]
 lexopt = "0.3.1"
