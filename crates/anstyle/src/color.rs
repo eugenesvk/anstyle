@@ -130,8 +130,13 @@ impl From<RgbColor> for Color {
         Self::Rgb(inner)
     }
 }
-impl From<Okhsv> for Color { #[inline] fn from(inner: Okhsv) -> Self { Self::Okhsv(inner) }}
-impl From<Okhsl> for Color { #[inline] fn from(inner: Okhsl) -> Self { Self::Okhsl(inner) }}
+use palette::angle::FromAngle;
+impl<T> From<Okhsv<T>> for Color
+where f32: FromAngle<T> + stimulus::FromStimulus<T> {
+  #[inline] fn from(inner: Okhsv<T>) -> Self { Self::Okhsv(inner.into_format()) }   }
+impl<T> From<Okhsl<T>> for Color
+where f32: FromAngle<T> + stimulus::FromStimulus<T> {
+  #[inline] fn from(inner: Okhsl<T>) -> Self { Self::Okhsl(inner.into_format()) }   }
 
 impl From<u8> for Color {
     #[inline]
@@ -585,7 +590,7 @@ impl From<(u8, u8, u8)> for RgbColor {
 
 
 #[allow(unused)]
-trait OkhsX {
+trait OkhsX<T> where T: Stimulus {
     fn on                 ( self, background: impl Into<Color>) -> crate::Style;
     fn on_default         ( self) -> crate::Style;
     fn render_fg          ( self) -> impl core::fmt::Display + Copy;
@@ -595,8 +600,12 @@ trait OkhsX {
     fn as_underline_buffer(&self) -> DisplayBuffer;
 }
 
-use palette::{IntoColor, Srgb, Okhsv, Okhsv as OkhsvColor, Okhsl, Okhsl as OkhslColor};
-impl OkhsX for Okhsv {
+use palette::{IntoColor, Srgb, Okhsv, Okhsv as OkhsvColor, Okhsl, Okhsl as OkhslColor, stimulus::{self,Stimulus}};
+impl<T> OkhsX<T> for Okhsv<T>
+where       T : Stimulus     + stimulus::IntoStimulus<u8> + Copy
+    , Okhsv<T>: IntoColor<Srgb<T>>
+    ,     f32 : FromAngle<T> + stimulus::FromStimulus<T> {
+
     #[inline]
     fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
         .fg_color(Some(self      .into()))
@@ -605,7 +614,7 @@ impl OkhsX for Okhsv {
     /// Create a [`Style`][crate::Style] with this as the foreground
     #[inline]
     fn on_default(self) -> crate::Style { crate::Style::new()
-        .fg_color(Some(Color::Okhsv(self)))   }
+        .fg_color(Some(Color::Okhsv(self.into_format())))   }
 
     /// Render the ANSI code for a foreground color
     #[inline] fn render_fg(self) -> impl core::fmt::Display + Copy { self.as_fg_buffer() }
@@ -613,25 +622,29 @@ impl OkhsX for Okhsv {
     #[inline] fn render_bg(self) -> impl core::fmt::Display + Copy { self.as_bg_buffer() }
 
     #[inline] fn as_fg_buffer       (&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[38;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
             .write_code(c.blue ).write_str("m")   }
     #[inline] fn as_bg_buffer       (&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[48;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
             .write_code(c.blue ).write_str("m")   }
     #[inline] fn as_underline_buffer(&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[58;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
             .write_code(c.blue ).write_str("m")   }
 }
-impl OkhsX for Okhsl {
+impl<T> OkhsX<T> for Okhsl<T>
+where       T : Stimulus     + stimulus::IntoStimulus<u8> + Copy
+    , Okhsl<T>: IntoColor<Srgb<T>>
+    ,     f32 : FromAngle<T> + stimulus::FromStimulus<T> {
+
     #[inline]
     fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
         .fg_color(Some(self      .into()))
@@ -640,7 +653,7 @@ impl OkhsX for Okhsl {
     /// Create a [`Style`][crate::Style] with this as the foreground
     #[inline]
     fn on_default(self) -> crate::Style { crate::Style::new()
-        .fg_color(Some(Color::Okhsl(self)))   }
+        .fg_color(Some(Color::Okhsl(self.into_format())))   }
 
     /// Render the ANSI code for a foreground color
     #[inline] fn render_fg(self) -> impl core::fmt::Display + Copy { self.as_fg_buffer() }
@@ -648,19 +661,19 @@ impl OkhsX for Okhsl {
     #[inline] fn render_bg(self) -> impl core::fmt::Display + Copy { self.as_bg_buffer() }
 
     #[inline] fn as_fg_buffer       (&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[38;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
             .write_code(c.blue ).write_str("m")   }
     #[inline] fn as_bg_buffer       (&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[48;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
             .write_code(c.blue ).write_str("m")   }
     #[inline] fn as_underline_buffer(&self) -> DisplayBuffer {
-        let c:Srgb<f32> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
+        let c:Srgb<T> = (*self).into_color(); let c:Srgb<u8> = c.into_format();
         DisplayBuffer::default().write_str("\x1B[58;2;")
             .write_code(c.red  ).write_str(";")
             .write_code(c.green).write_str(";")
