@@ -602,9 +602,9 @@ trait OkhsX<T> where T: Stimulus {
 
 use palette::{IntoColor, Srgb, Okhsv, Okhsv as OkhsvColor, Okhsl, Okhsl as OkhslColor, stimulus::{self,Stimulus}};
 impl<T> OkhsX<T> for Okhsv<T>
-where       T : Stimulus     + stimulus::IntoStimulus<u8> + Copy
-    , Okhsv<T>: IntoColor<Srgb<T>>
-    ,     f32 : FromAngle<T> + stimulus::FromStimulus<T> {
+where T   : Stimulus     + stimulus::IntoStimulus<u8> + Copy
+    , Self: IntoColor<Srgb<T>>
+    , f32 : FromAngle<T> + stimulus::FromStimulus<T> {
 
     #[inline]
     fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
@@ -641,9 +641,9 @@ where       T : Stimulus     + stimulus::IntoStimulus<u8> + Copy
             .write_code(c.blue ).write_str("m")   }
 }
 impl<T> OkhsX<T> for Okhsl<T>
-where       T : Stimulus     + stimulus::IntoStimulus<u8> + Copy
-    , Okhsl<T>: IntoColor<Srgb<T>>
-    ,     f32 : FromAngle<T> + stimulus::FromStimulus<T> {
+where T   : Stimulus     + stimulus::IntoStimulus<u8> + Copy
+    , Self: IntoColor<Srgb<T>>
+    , f32 : FromAngle<T> + stimulus::FromStimulus<T> {
 
     #[inline]
     fn on(self, background: impl Into<Color>) -> crate::Style { crate::Style::new()
